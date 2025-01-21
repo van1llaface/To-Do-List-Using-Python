@@ -10,14 +10,33 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pylint
-    - name: Analysing the code with pylint
+    - name: Analyse code with pylint
+      id: pylint
       run: |
-        pylint $(git ls-files '*.py')
+        # Run pylint and save the output to a file
+        pylint $(git ls-files '*.py') > pylint_report.txt || true
+        
+        # Extract the pylint score
+        score=$(grep "Your code has been rated at" pylint_report.txt | awk '{print $7}' | cut -d'/' -f1)
+        echo "Pylint score: $score"
+        
+        # Set an output variable for the score
+        echo "::set-output name=score::$score"
+    - name: Check Pylint score
+      run: |
+        if (( $(echo "${{ steps.pylint.outputs.score }} > 6" | bc -l) )); then
+          echo "Pylint score is greater than 6. Pipeline succeeded."
+        else
+          echo "Pylint score is less than or equal to 6. Pipeline failed."
+          exit 1
+        fi
