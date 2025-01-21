@@ -34,8 +34,6 @@ def main():
             task_input = ""
             display(task_list)
 
-    
-
     # Add a button to clear the task list
     if st.button("Clear all tasks"):
         # Clear the task list and save the changes to the CSV file
